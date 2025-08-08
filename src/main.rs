@@ -24,12 +24,8 @@ fn tracer_init(child_pid: &Pid) {
             Ok(status) => {
                 //need to castu status into the c_int
                 println!("process has benn changed");
-                match WIFEXITED(status) {
-                    true => {
-                        panic!("child process finished!");
-                    }
-                    false => (),
-                }
+                let tmp_stat = status;
+                println!("{:?}", tmp_stat);
             }
             Err(_) => {
                 println!("some error");
