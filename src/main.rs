@@ -1,7 +1,9 @@
 #![allow(dead_code, unused)]
 
 use nix::unistd::{fork, ForkResult, Pid};
-use nix::sys::ptrace;
+use nix::sys::{ptrace, wait};
+use nix::sys::ptrace::Options;
+use libc::{WSTOPSIG, WIFSTOPPED, WIFEXITED};
 use exec;
 
 fn tracee_init() {
@@ -9,6 +11,31 @@ fn tracee_init() {
     let _ = exec::Command::new("ls")
         .arg("-la")
         .exec();
+}
+
+fn tracer_init(child_pid: &Pid) {
+    let status: i32;
+
+    ptrace::setoptions(*child_pid, Options::PTRACE_O_TRACESYSGOOD);
+    
+    loop {
+        ptrace::syscall(*child_pid, None);
+        match wait::waitpid(*child_pid, None) {
+            Ok(status) => {
+                //need to castu status into the c_int
+                println!("process has benn changed");
+                match WIFEXITED(status) {
+                    true => {
+                        panic!("child process finished!");
+                    }
+                    false => (),
+                }
+            }
+            Err(_) => {
+                println!("some error");
+            }
+        }
+    }
 }
 
 fn main() {
@@ -19,6 +46,7 @@ fn main() {
         }
         Ok(ForkResult::Parent{child}) => {
             println!("i'm a parent!");
+            tracer_init(&child);
         }
         Err(_) => {
             println!("failed with fork");

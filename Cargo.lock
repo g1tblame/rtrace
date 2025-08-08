@@ -83,6 +83,7 @@ name = "rtracer"
 version = "0.1.0"
 dependencies = [
  "exec",
+ "libc",
  "nix",
 ]
 
