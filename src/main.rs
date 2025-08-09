@@ -1,7 +1,7 @@
 #![allow(dead_code, unused)]
 
 use nix::unistd::{fork, ForkResult, Pid};
-use nix::sys::{ptrace, wait};
+use nix::sys::{ptrace, wait::{waitpid, WaitStatus}};
 use nix::sys::ptrace::Options;
 use libc::{WSTOPSIG, WIFSTOPPED, WIFEXITED};
 use exec;
@@ -20,12 +20,20 @@ fn tracer_init(child_pid: &Pid) {
     
     loop {
         ptrace::syscall(*child_pid, None);
-        match wait::waitpid(*child_pid, None) {
+        match waitpid(*child_pid, None) {
             Ok(status) => {
                 //need to castu status into the c_int
-                println!("process has benn changed");
                 let tmp_stat = status;
                 println!("{:?}", tmp_stat);
+                match status {
+                    WaitStatus::Exited(child_pid,_) => {
+                        panic!("child process was finished");
+                    },
+                    WaitStatus::StillAlive => {
+                        println!("i'm still alive!");
+                    },
+                    _ => (),
+                }
             }
             Err(_) => {
                 println!("some error");
