@@ -3,10 +3,22 @@
 use nix::unistd::{fork, ForkResult, Pid};
 use nix::sys::{ptrace, wait::{waitpid, WaitStatus}};
 use nix::sys::ptrace::Options;
-use libc;
+use libc::ENOSYS;
 use std::os::raw::c_int;
 use exec;
 use nix::sys::signal::Signal::SIGTRAP;
+
+fn handle_syscall(child_pid: &Pid) {
+    let regs = ptrace::getregs(*child_pid).unwrap();
+    let meta_syscall = ptrace::syscall_info(*child_pid);
+    if regs.rax == -ENOSYS as u64 {
+        // it means that we are entering syscall so do nothing
+        ();
+    }
+    else {
+        println!("syscall - {}", regs.orig_rax);
+    }
+}
 
 fn tracee_init() {
     let _ = ptrace::traceme().expect("failed to set TRACEME flag");
@@ -16,7 +28,6 @@ fn tracee_init() {
 }
 
 fn tracer_init(child_pid: &Pid) {
-
     ptrace::setoptions(*child_pid, Options::PTRACE_O_TRACESYSGOOD);
 
     loop {
@@ -26,9 +37,9 @@ fn tracer_init(child_pid: &Pid) {
                 println!("process was finished!");
             },
             Ok(WaitStatus::Stopped(pid_t, sig_t)) => {
-                println!("process was stopped!");
+//                println!("process was stopped!");
                 match sig_t {
-                    SIGTRAP => println!("sigtrapped!"),
+                    SIGTRAP => handle_syscall(child_pid),
                     _ => (),
                 }
             },
