@@ -19,7 +19,7 @@ fn handle_syscall(child_pid: &Pid) {
     }
     else {
         let syscall_name = Syscalls::name(regs.orig_rax).unwrap();
-        println!("syscall - {} - {}", regs.orig_rax, syscall_name);
+        println!("{}({})", syscall_name, regs.orig_rax);
     }
 }
 
