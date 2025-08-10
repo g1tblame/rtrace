@@ -3,54 +3,50 @@
 use nix::unistd::{fork, ForkResult, Pid};
 use nix::sys::{ptrace, wait::{waitpid, WaitStatus}};
 use nix::sys::ptrace::Options;
-use libc::{WSTOPSIG, WIFSTOPPED, WIFEXITED};
+use libc;
+use std::os::raw::c_int;
 use exec;
+use nix::sys::signal::Signal::SIGTRAP;
 
 fn tracee_init() {
-    let _ = ptrace::traceme();
+    let _ = ptrace::traceme().expect("failed to set TRACEME flag");
     let _ = exec::Command::new("ls")
         .arg("-la")
         .exec();
 }
 
 fn tracer_init(child_pid: &Pid) {
-    let status: i32;
 
     ptrace::setoptions(*child_pid, Options::PTRACE_O_TRACESYSGOOD);
-    
+
     loop {
         ptrace::syscall(*child_pid, None);
         match waitpid(*child_pid, None) {
-            Ok(status) => {
-                //need to castu status into the c_int
-                let tmp_stat = status;
-                println!("{:?}", tmp_stat);
-                match status {
-                    WaitStatus::Exited(child_pid,_) => {
-                        panic!("child process was finished");
-                    },
-                    WaitStatus::StillAlive => {
-                        println!("i'm still alive!");
-                    },
+            Ok(WaitStatus::Exited(_, _)) => {
+                println!("process was finished!");
+            },
+            Ok(WaitStatus::Stopped(pid_t, sig_t)) => {
+                println!("process was stopped!");
+                match sig_t {
+                    SIGTRAP => println!("sigtrapped!"),
                     _ => (),
                 }
-            }
-            Err(_) => {
-                println!("some error");
-            }
+            },
+            _ => (),
         }
     }
+    
 }
-
+    
 fn main() {
     match unsafe{fork()} {
-        Ok(ForkResult::Child) => {
-            println!("i'm child!");
-            tracee_init();
-        }
         Ok(ForkResult::Parent{child}) => {
             println!("i'm a parent!");
             tracer_init(&child);
+        }
+        Ok(ForkResult::Child) => {
+            println!("i'm child!");
+            tracee_init();
         }
         Err(_) => {
             println!("failed with fork");
