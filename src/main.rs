@@ -6,9 +6,8 @@ use nix::{
     sys::wait::{waitpid, WaitStatus},
     sys::signal::Signal::{SIGTRAP},
 };
-use nix::sys::ptrace::Options;
 use libc::ENOSYS;
-use std::os::raw::c_int;
+use sysnames::Syscalls;
 use exec;
 
 fn handle_syscall(child_pid: &Pid) {
@@ -19,7 +18,8 @@ fn handle_syscall(child_pid: &Pid) {
         ();
     }
     else {
-        println!("syscall - {}", regs.orig_rax);
+        let syscall_name = Syscalls::name(regs.orig_rax).unwrap();
+        println!("syscall - {} - {}", regs.orig_rax, syscall_name);
     }
 }
 
@@ -31,7 +31,7 @@ fn tracee_init() {
 }
 
 fn tracer_init(child_pid: &Pid) {
-    ptrace::setoptions(*child_pid, Options::PTRACE_O_TRACESYSGOOD);
+    ptrace::setoptions(*child_pid, ptrace::Options::PTRACE_O_TRACESYSGOOD);
 
     loop {
         ptrace::syscall(*child_pid, None);
