@@ -24,7 +24,7 @@ fn handle_syscall(child_pid: &Pid) {
 }
 
 fn tracee_init() {
-    let _ = ptrace::traceme().expect("failed to set TRACEME flag");
+    ptrace::traceme().expect("failed to set TRACEME flag");
     let _ = exec::Command::new("ls")
         .arg("-la")
         .exec();
