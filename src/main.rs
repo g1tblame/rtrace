@@ -38,6 +38,7 @@ fn tracer_init(child_pid: &Pid) {
         match waitpid(*child_pid, None) {
             Ok(WaitStatus::Exited(_, _)) => {
                 println!("process was finished!");
+                break;
             },
             Ok(WaitStatus::Stopped(pid_t, sig_t)) => {
                 match sig_t {
