@@ -1,12 +1,15 @@
 #![allow(dead_code, unused)]
 
-use nix::unistd::{fork, ForkResult, Pid};
-use nix::sys::{ptrace, wait::{waitpid, WaitStatus}};
+use nix::{
+    unistd::{fork, ForkResult, Pid},
+    sys::ptrace,
+    sys::wait::{waitpid, WaitStatus},
+    sys::signal::Signal::{SIGTRAP},
+};
 use nix::sys::ptrace::Options;
 use libc::ENOSYS;
 use std::os::raw::c_int;
 use exec;
-use nix::sys::signal::Signal::SIGTRAP;
 
 fn handle_syscall(child_pid: &Pid) {
     let regs = ptrace::getregs(*child_pid).unwrap();
@@ -37,7 +40,6 @@ fn tracer_init(child_pid: &Pid) {
                 println!("process was finished!");
             },
             Ok(WaitStatus::Stopped(pid_t, sig_t)) => {
-//                println!("process was stopped!");
                 match sig_t {
                     SIGTRAP => handle_syscall(child_pid),
                     _ => (),
@@ -52,15 +54,13 @@ fn tracer_init(child_pid: &Pid) {
 fn main() {
     match unsafe{fork()} {
         Ok(ForkResult::Parent{child}) => {
-            println!("i'm a parent!");
             tracer_init(&child);
         }
         Ok(ForkResult::Child) => {
-            println!("i'm child!");
             tracee_init();
         }
         Err(_) => {
-            println!("failed with fork");
+            eprintln!("failed with fork");
         }
     }
 }
