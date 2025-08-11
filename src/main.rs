@@ -9,6 +9,7 @@ use nix::{
 use libc::ENOSYS;
 use sysnames::Syscalls;
 use exec;
+use std::env;
 
 fn handle_syscall(child_pid: &Pid) {
     let regs = ptrace::getregs(*child_pid).unwrap();
@@ -53,6 +54,8 @@ fn tracer_init(child_pid: &Pid) {
 }
     
 fn main() {
+    let args: Vec<String> = env::args().collect();
+    println!("{:?}", args);
     match unsafe{fork()} {
         Ok(ForkResult::Parent{child}) => {
             tracer_init(&child);
