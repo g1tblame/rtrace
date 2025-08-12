@@ -11,6 +11,14 @@ use sysnames::Syscalls;
 use exec;
 use std::env;
 
+fn handle_cli_args() {
+    let cli_args: Vec<String> = env::args().collect();
+//    dbg!(cli_args);
+    if cli_args.len() == 1 {
+        panic!("to few arguments!");
+    }
+}
+
 fn handle_syscall(child_pid: &Pid) {
     let regs = ptrace::getregs(*child_pid).unwrap();
     let meta_syscall = ptrace::syscall_info(*child_pid);
@@ -27,7 +35,7 @@ fn handle_syscall(child_pid: &Pid) {
 fn tracee_init() {
     ptrace::traceme().expect("failed to set TRACEME flag");
     let _ = exec::Command::new("ls")
-        .arg("-la")
+//        .arg("-la")
         .exec();
 }
 
@@ -54,8 +62,7 @@ fn tracer_init(child_pid: &Pid) {
 }
     
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    println!("{:?}", args);
+    handle_cli_args();
     match unsafe{fork()} {
         Ok(ForkResult::Parent{child}) => {
             tracer_init(&child);
