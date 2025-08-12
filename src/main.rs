@@ -11,12 +11,28 @@ use sysnames::Syscalls;
 use exec;
 use std::env;
 
-fn handle_cli_args() {
-    let cli_args: Vec<String> = env::args().collect();
-//    dbg!(cli_args);
-    if cli_args.len() == 1 {
-        panic!("to few arguments!");
+fn fork_init() {
+    match unsafe{fork()} {
+        Ok(ForkResult::Parent{child}) => {
+            tracer_init(&child);
+        }
+        Ok(ForkResult::Child) => {
+            tracee_init();
+        }
+        Err(_) => {
+            eprintln!("failed with fork");
+        }
     }
+}
+
+fn handle_cli_args() -> bool {
+    let cli_args: Vec<String> = env::args().collect();
+    match cli_args.len() {
+        1 => false,
+        2 => true,
+        _ => false,
+    }
+
 }
 
 fn handle_syscall(child_pid: &Pid) {
@@ -62,16 +78,8 @@ fn tracer_init(child_pid: &Pid) {
 }
     
 fn main() {
-    handle_cli_args();
-    match unsafe{fork()} {
-        Ok(ForkResult::Parent{child}) => {
-            tracer_init(&child);
-        }
-        Ok(ForkResult::Child) => {
-            tracee_init();
-        }
-        Err(_) => {
-            eprintln!("failed with fork");
-        }
+    match handle_cli_args() {
+        true => fork_init(),
+        false => panic!("to few arguments!"),
     }
 }
