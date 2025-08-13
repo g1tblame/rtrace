@@ -28,7 +28,7 @@ fn fork_init() {
 fn handle_cli_args() -> bool {
     let cli_args: Vec<String> = env::args().collect();
     match cli_args.len() {
-        1 => false,
+        1 => true,
         2 => true,
         _ => false,
     }
@@ -43,14 +43,15 @@ fn handle_syscall(child_pid: &Pid) {
         ();
     }
     else {
-        let syscall_name = Syscalls::name(regs.orig_rax).unwrap();
+        let syscall_name = Syscalls::name(regs.orig_rax).unwrap().to_uppercase();
         println!("{}({})", syscall_name, regs.orig_rax);
     }
 }
 
 fn tracee_init() {
     ptrace::traceme().expect("failed to set TRACEME flag");
-    let _ = exec::Command::new("ls")
+    let bin: String = String::from("./test");
+    let _ = exec::Command::new(bin)
 //        .arg("-la")
         .exec();
 }
