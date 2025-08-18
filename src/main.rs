@@ -25,7 +25,7 @@ fn fork_init() {
     }
 }
 
-fn handle_cli_args() -> bool {
+fn check_args_len() -> bool {
     let cli_args: Vec<String> = env::args().collect();
     match cli_args.len() {
         1 => true,
@@ -50,7 +50,7 @@ fn handle_syscall(child_pid: &Pid) {
 
 fn tracee_init() {
     ptrace::traceme().expect("failed to set TRACEME flag");
-    let bin: String = String::from("./test");
+    let bin: String = String::from("ls");
     let _ = exec::Command::new(bin)
 //        .arg("-la")
         .exec();
@@ -79,7 +79,7 @@ fn tracer_init(child_pid: &Pid) {
 }
     
 fn main() {
-    match handle_cli_args() {
+    match check_args_len() {
         true => fork_init(),
         false => panic!("to few arguments!"),
     }
