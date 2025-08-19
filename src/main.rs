@@ -37,14 +37,15 @@ fn check_args_len() -> bool {
 
 fn handle_syscall(child_pid: &Pid) {
     let regs = ptrace::getregs(*child_pid).unwrap();
-    let meta_syscall = ptrace::syscall_info(*child_pid);
+//    println!("{:?}", regs);
     if regs.rax == -ENOSYS as u64 {
         // it means that we are entering syscall so do nothing
         ();
     }
     else {
         let syscall_name = Syscalls::name(regs.orig_rax).unwrap().to_uppercase();
-        println!("{}({})", syscall_name, regs.orig_rax);
+        let ret = regs.rax;
+        println!("{}({}) = {}", syscall_name, regs.orig_rax, ret);
     }
 }
 
