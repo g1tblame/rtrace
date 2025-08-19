@@ -45,7 +45,7 @@ fn handle_syscall(child_pid: &Pid) {
     else {
         let syscall_name = Syscalls::name(regs.orig_rax).unwrap().to_uppercase();
         let ret = regs.rax;
-        println!("{}({}, {}, {}) = {}", syscall_name, regs.rdi, regs.rsi, regs.rdx, ret);
+        println!("{}({:#x}, {:#x}, {:#x}) = {}", syscall_name, regs.rdi, regs.rsi, regs.rdx, ret);
     }
 }
 
