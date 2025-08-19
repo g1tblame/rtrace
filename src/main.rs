@@ -25,15 +25,15 @@ fn fork_init() {
     }
 }
 
-fn check_args_len() -> bool {
-    let cli_args: Vec<String> = env::args().collect();
-    match cli_args.len() {
-        1 => true,
-        2 => true,
-        _ => false,
-    }
-
-}
+//fn check_args_len() -> bool {
+//    let cli_args: Vec<String> = env::args().collect();
+//    match cli_args.len() {
+//        1 => false,
+//        2 => true,
+//        _ => false,
+//    }
+//
+//}
 
 fn handle_syscall(child_pid: &Pid) {
     let regs = ptrace::getregs(*child_pid).unwrap();
@@ -80,8 +80,5 @@ fn tracer_init(child_pid: &Pid) {
 }
     
 fn main() {
-    match check_args_len() {
-        true => fork_init(),
-        false => panic!("to few arguments!"),
-    }
+        fork_init();
 }
