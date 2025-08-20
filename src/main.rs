@@ -6,7 +6,7 @@ use nix::{
     sys::wait::{waitpid, WaitStatus},
     sys::signal::Signal::{SIGTRAP},
 };
-use libc::ENOSYS;
+use libc::{ENOSYS, SYS_openat, c_long, c_void};
 use sysnames::Syscalls;
 use exec;
 use std::env;
@@ -29,7 +29,7 @@ fn fork_init() {
             tracee_init();
         }
         Err(_) => {
-            eprintln!("failed with fork");
+            eprintln!("fork failed");
         }
     }
 }
@@ -42,10 +42,29 @@ fn check_args_len(exec_args: usize) -> bool {
     }
 }
 
+fn print_syscall(syscall: &SyscallBody) {
+    println!("{}({:#x}, {:#x}, {:#x}) = {}", syscall.name, syscall.first_arg, syscall.second_arg, syscall.third_arg, syscall.ret);
+}
+
+fn preprocess_syscall_args(child_pid: &Pid, syscall: &mut SyscallBody) {
+    match syscall.num as c_long {
+        SYS_openat => {
+            let openat_addr = syscall.second_arg as *mut c_void;
+            match ptrace::read(*child_pid, openat_addr) {
+                Ok(data) => {println!("OPENAT DATA HERE - {:#x}", data);},
+                Err(_) => (),
+            }
+        },
+        _ => (),
+    }
+    print_syscall(&syscall);
+}
+
+
 fn handle_syscall(child_pid: &Pid) {
     let regs = ptrace::getregs(*child_pid).unwrap();
 
-    let syscall = SyscallBody {
+    let mut syscall = SyscallBody {
         ret: regs.rax,
         first_arg: regs.rdi,
         second_arg: regs.rsi,
@@ -59,7 +78,7 @@ fn handle_syscall(child_pid: &Pid) {
         ();
     }
     else {
-        println!("{}({:#x}, {:#x}, {:#x}) = {}", syscall.name, syscall.first_arg, syscall.second_arg, syscall.third_arg, syscall.ret);
+        preprocess_syscall_args(&child_pid, &mut syscall);
     }
 }
 
