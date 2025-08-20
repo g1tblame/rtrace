@@ -25,19 +25,16 @@ fn fork_init() {
     }
 }
 
-//fn check_args_len() -> bool {
-//    let cli_args: Vec<String> = env::args().collect();
-//    match cli_args.len() {
-//        1 => false,
-//        2 => true,
-//        _ => false,
-//    }
-//
-//}
+fn check_args_len(exec_args: usize) -> bool {
+    match exec_args {
+        1 => false,
+        2 => true,
+        _ => false,
+    }
+}
 
 fn handle_syscall(child_pid: &Pid) {
     let regs = ptrace::getregs(*child_pid).unwrap();
-//    println!("{:?}", regs);
     if regs.rax == -ENOSYS as u64 {
         // it means that we are entering syscall so do nothing
         ();
@@ -51,10 +48,9 @@ fn handle_syscall(child_pid: &Pid) {
 
 fn tracee_init() {
     ptrace::traceme().expect("failed to set TRACEME flag");
-    let bin: String = String::from("ls");
-    let _ = exec::Command::new(bin)
-//        .arg("-la")
-        .exec();
+    let cli_args: Vec<String> = env::args().collect();
+    let _ = exec::Command::new(cli_args[1].clone()).
+        exec();
 }
 
 fn tracer_init(child_pid: &Pid) {
@@ -80,5 +76,9 @@ fn tracer_init(child_pid: &Pid) {
 }
     
 fn main() {
-        fork_init();
+    let cli_args: Vec<String> = env::args().collect();
+    match check_args_len(cli_args.len()) {
+        false => {eprintln!("to few arguments!");},
+        true => {fork_init();},
+    }
 }
