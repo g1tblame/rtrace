@@ -20,6 +20,12 @@ struct SyscallBody {
     num: u64,
 }
 
+impl SyscallBody {
+    fn print(&self) {
+        println!("{}({:#x}, {:#x}, {:#x}) = {}", self.name, self.first_arg, self.second_arg, self.third_arg, self.ret);
+    }
+}
+
 fn fork_init() {
     match unsafe{fork()} {
         Ok(ForkResult::Parent{child}) => {
@@ -42,26 +48,24 @@ fn check_args_len(exec_args: usize) -> bool {
     }
 }
 
-fn print_syscall(syscall: &SyscallBody) {
-    println!("{}({:#x}, {:#x}, {:#x}) = {}", syscall.name, syscall.first_arg, syscall.second_arg, syscall.third_arg, syscall.ret);
-}
 
-fn preprocess_syscall_args(child_pid: &Pid, syscall: &mut SyscallBody) {
+fn match_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     match syscall.num as c_long {
-        SYS_openat => {
+        libc::SYS_openat => {
             let openat_addr = syscall.second_arg as *mut c_void;
-            match ptrace::read(*child_pid, openat_addr) {
-                Ok(data) => {println!("OPENAT DATA HERE - {:#x}", data);},
-                Err(_) => (),
-            }
+            //match ptrace::read(*child_pid, openat_addr) {
+            //    Ok(data) => {println!("OPENAT DATA HERE - {:#x}", data);},
+            //    Err(_) => (),
+            //}
         },
         _ => (),
     }
-    print_syscall(&syscall);
+
+    syscall.print();
 }
 
 
-fn handle_syscall(child_pid: &Pid) {
+fn trace_syscall(child_pid: &Pid) {
     let regs = ptrace::getregs(*child_pid).unwrap();
 
     let mut syscall = SyscallBody {
@@ -78,7 +82,7 @@ fn handle_syscall(child_pid: &Pid) {
         ();
     }
     else {
-        preprocess_syscall_args(&child_pid, &mut syscall);
+        match_syscall(&child_pid, &mut syscall);
     }
 }
 
@@ -100,7 +104,7 @@ fn tracer_init(child_pid: &Pid) {
             },
             Ok(WaitStatus::Stopped(pid_t, sig_t)) => {
                 match sig_t {
-                    SIGTRAP => handle_syscall(child_pid),
+                    SIGTRAP => trace_syscall(child_pid),
                     _ => (),
                 }
             },

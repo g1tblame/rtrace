@@ -10,8 +10,8 @@ build:
 	cargo build
 
 install: build
-	cp $(TARGET_PATH) $(INSTALL_PATH)
-	chmod +x $(INSTALL_PATH)
+	sudo cp $(TARGET_PATH) $(INSTALL_PATH)
+	sudo chmod +x $(INSTALL_PATH)
 
 clean:
 	cargo clean
