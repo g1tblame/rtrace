@@ -4,7 +4,7 @@ BINARY_NAME = rtracer
 TARGET_PATH = target/debug/$(BINARY_NAME)
 INSTALL_PATH = /usr/bin/$(BINARY_NAME)
 
-all: build
+all: build install
 
 build:
 	cargo build

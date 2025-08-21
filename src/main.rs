@@ -6,7 +6,8 @@ use nix::{
     sys::wait::{waitpid, WaitStatus},
     sys::signal::Signal::{SIGTRAP},
 };
-use libc::{ENOSYS, SYS_openat, c_long, c_void};
+use libc::{SYS_openat, SYS_brk};
+use libc::{ENOSYS, c_long, c_void};
 use sysnames::Syscalls;
 use exec;
 use std::env;
@@ -48,20 +49,24 @@ fn check_args_len(exec_args: usize) -> bool {
     }
 }
 
+fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+        let openat_addr = syscall.second_arg as *mut c_void;
+        dbg!(openat_addr);
+        match ptrace::read(*child_pid, openat_addr) {
+            Ok(data) => {println!("OPENAT DATA HERE - {:#x}", data);},
+            Err(_) => (),
+        }
+        syscall.print();
+}
+
 
 fn match_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     match syscall.num as c_long {
-        libc::SYS_openat => {
-            let openat_addr = syscall.second_arg as *mut c_void;
-            //match ptrace::read(*child_pid, openat_addr) {
-            //    Ok(data) => {println!("OPENAT DATA HERE - {:#x}", data);},
-            //    Err(_) => (),
-            //}
-        },
+        libc::SYS_openat => {openat_syscall(child_pid, syscall);},
         _ => (),
     }
-
     syscall.print();
+
 }
 
 
