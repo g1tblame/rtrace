@@ -11,6 +11,7 @@ use libc::{ENOSYS, c_long, c_void};
 use sysnames::Syscalls;
 use exec;
 use std::env;
+use byteorder::{WriteBytesExt, ByteOrder, LittleEndian};
 
 struct SyscallBody {
     ret: u64,
@@ -51,11 +52,24 @@ fn check_args_len(exec_args: usize) -> bool {
 
 fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
         let openat_addr = syscall.second_arg as *mut c_void;
-        dbg!(openat_addr);
+        let mut stack_data: c_long = 0;
+        let mut hex_bytes: Vec<u8> = vec![];
+
+        let mut string: String = String::new();
         match ptrace::read(*child_pid, openat_addr) {
-            Ok(data) => {println!("OPENAT DATA HERE - {:#x}", data);},
+            Ok(data) => {
+                //let first_arg_string = String::from_utf8(data).expect("invalid UTF8");
+                println!("{:#x}", data);
+                stack_data = data;
+            },
             Err(_) => (),
         }
+
+        hex_bytes.write_i64::<LittleEndian>(stack_data).unwrap_or_else(|err| {
+            panic!("Failed to write {} as i64 LittleEndian: {}", stack_data, err);
+        });
+        println!("STRING HERE - {:?}", hex_bytes);
+
         syscall.print();
 }
 
@@ -65,7 +79,7 @@ fn match_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
         libc::SYS_openat => {openat_syscall(child_pid, syscall);},
         _ => (),
     }
-    syscall.print();
+    //syscall.print();
 
 }
 
