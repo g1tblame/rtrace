@@ -53,7 +53,7 @@ fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
         match ptrace::read(*child_pid, openat_addr) {
             Ok(data) => {
                 //let first_arg_string = String::from_utf8(data).expect("invalid UTF8");
-                println!("{:#x}", data);
+                //println!("{:#x}", data);
                 stack_data = data;
             },
             Err(_) => (),
@@ -71,11 +71,22 @@ fn close_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
         println!("{}({}) = {}", syscall.name, syscall.first_arg, syscall.ret);
 }
 
+fn brk_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    if syscall.first_arg == 0 {
+        println!("{}(NULL) = {:#x}", syscall.name, syscall.ret);
+    }
+    else {
+        println!("{}({:#x}) = {:#x}", syscall.name, syscall.first_arg, syscall.ret);
+    }
+}
+
+
 
 fn match_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     match syscall.num as c_long {
         libc::SYS_openat => {openat_syscall(child_pid, syscall);},
         libc::SYS_close => {close_syscall(child_pid, syscall);},
+        libc::SYS_brk => {brk_syscall(child_pid, syscall);},
         _ => {
             println!("{}({:#x})", syscall.name, syscall.first_arg);
         },
