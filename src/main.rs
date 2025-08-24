@@ -6,7 +6,7 @@ use nix::{
     sys::wait::{waitpid, WaitStatus},
     sys::signal::Signal::{SIGTRAP},
 };
-use libc::{SYS_openat, SYS_brk};
+use libc::{SYS_openat, SYS_brk, SYS_close};
 use libc::{ENOSYS, c_long, c_void};
 use sysnames::Syscalls;
 use exec;
@@ -20,12 +20,6 @@ struct SyscallBody {
     third_arg: u64,
     name: String,
     num: u64,
-}
-
-impl SyscallBody {
-    fn print(&self) {
-        println!("{}({:#x}, {:#x}, {:#x}) = {}", self.name, self.first_arg, self.second_arg, self.third_arg, self.ret);
-    }
 }
 
 fn fork_init() {
@@ -65,21 +59,27 @@ fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
             Err(_) => (),
         }
 
-        hex_bytes.write_i64::<LittleEndian>(stack_data).unwrap_or_else(|err| {
-            panic!("Failed to write {} as i64 LittleEndian: {}", stack_data, err);
-        });
-        println!("STRING HERE - {:?}", hex_bytes);
+//        hex_bytes.write_i64::<LittleEndian>(stack_data).unwrap_or_else(|err| {
+//            panic!("Failed to write {} as i64 LittleEndian: {}", stack_data, err);
+//        });
+//        println!("STRING HERE - {:?}", hex_bytes);
+//
+//        syscall.print();
+}
 
-        syscall.print();
+fn close_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+        println!("{}({}) = {}", syscall.name, syscall.first_arg, syscall.ret);
 }
 
 
 fn match_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     match syscall.num as c_long {
         libc::SYS_openat => {openat_syscall(child_pid, syscall);},
-        _ => (),
+        libc::SYS_close => {close_syscall(child_pid, syscall);},
+        _ => {
+            println!("{}({:#x})", syscall.name, syscall.first_arg);
+        },
     }
-    //syscall.print();
 
 }
 
