@@ -22,6 +22,7 @@ struct SyscallBody {
     third_arg: u64,
     name: String,
     num: u64,
+    args_count_flag: u64,
 }
 
 fn fork_init() {
@@ -70,6 +71,7 @@ fn trace_syscall(child_pid: &Pid) {
         third_arg: regs.rdx,
         num: regs.orig_rax,
         name: Syscalls::name(regs.orig_rax).unwrap().to_uppercase(),
+        args_count_flag: 0,
     };
 
     if syscall.ret == -ENOSYS as u64 {
