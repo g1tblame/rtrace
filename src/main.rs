@@ -25,6 +25,20 @@ struct SyscallBody {
     args_count_flag: u64,
 }
 
+impl SyscallBody {
+    fn print(&self) {
+        match self.args_count_flag {
+            0 => {
+                println!("{}(NULL) = {:#x}", self.name, self.ret);
+            },
+            1 => {
+                println!("{}({:#x}) = {:#x}", syscall.name, syscall.first_arg, syscall.ret);
+            },
+            _ => (),
+        }
+    }
+}
+
 fn fork_init() {
     match unsafe{fork()} {
         Ok(ForkResult::Parent{child}) => {

@@ -9,6 +9,7 @@ pub fn close_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
 
 pub fn brk_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     if syscall.first_arg == 0 {
+        syscall.args_count_flag = 1;
         println!("{}(NULL) = {:#x}", syscall.name, syscall.ret);
     }
     else {
