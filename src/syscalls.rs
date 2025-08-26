@@ -1,7 +1,30 @@
-use crate::SyscallBody;
 use nix::unistd::Pid;
 use nix::sys::ptrace;
 use libc::{c_void, c_long};
+
+impl SyscallBody {
+    fn print(&self) {
+        match self.args_count_flag {
+            0 => {
+                println!("{}(NULL) = {:#x}", self.name, self.ret);
+            },
+            1 => {
+                println!("{}({:#x}) = {:#x}", self.name, self.first_arg, self.ret);
+            },
+            _ => (),
+        }
+    }
+}
+
+pub struct SyscallBody {
+    pub ret: u64,
+    pub first_arg: u64,
+    pub second_arg: u64,
+    pub third_arg: u64,
+    pub name: String,
+    pub num: u64,
+    pub args_count_flag: u64,
+}
 
 pub fn close_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     syscall.args_count_flag = 1;

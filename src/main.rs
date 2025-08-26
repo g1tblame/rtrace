@@ -14,30 +14,7 @@ use sysnames::Syscalls;
 use exec;
 use std::env;
 use byteorder::{WriteBytesExt, ByteOrder, LittleEndian};
-
-struct SyscallBody {
-    ret: u64,
-    first_arg: u64,
-    second_arg: u64,
-    third_arg: u64,
-    name: String,
-    num: u64,
-    args_count_flag: u64,
-}
-
-impl SyscallBody {
-    fn print(&self) {
-        match self.args_count_flag {
-            0 => {
-                println!("{}(NULL) = {:#x}", self.name, self.ret);
-            },
-            1 => {
-                println!("{}({:#x}) = {:#x}", self.name, self.first_arg, self.ret);
-            },
-            _ => (),
-        }
-    }
-}
+use crate::syscalls::SyscallBody;
 
 fn fork_init() {
     match unsafe{fork()} {
