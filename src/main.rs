@@ -32,7 +32,7 @@ impl SyscallBody {
                 println!("{}(NULL) = {:#x}", self.name, self.ret);
             },
             1 => {
-                println!("{}({:#x}) = {:#x}", syscall.name, syscall.first_arg, syscall.ret);
+                println!("{}({:#x}) = {:#x}", self.name, self.first_arg, self.ret);
             },
             _ => (),
         }

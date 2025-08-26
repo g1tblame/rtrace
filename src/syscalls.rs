@@ -4,21 +4,17 @@ use nix::sys::ptrace;
 use libc::{c_void, c_long};
 
 pub fn close_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-        println!("{}({}) = {}", syscall.name, syscall.first_arg, syscall.ret);
+    syscall.args_count_flag = 1;
+    syscall.print();
 }
 
 pub fn brk_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     if syscall.first_arg == 0 {
-<<<<<<< HEAD
-        syscall.args_count_flag = 1;
-=======
         syscall.args_count_flag = 0;
->>>>>>> 159bd78 (started to implement start method but not tested yet)
-        println!("{}(NULL) = {:#x}", syscall.name, syscall.ret);
+    } else {
+        syscall.args_count_flag = 1;
     }
-    else {
-        println!("{}({:#x}) = {:#x}", syscall.name, syscall.first_arg, syscall.ret);
-    }
+    syscall.print();
 }
 
 pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
