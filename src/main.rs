@@ -8,7 +8,7 @@ use nix::{
     sys::wait::{waitpid, WaitStatus},
     sys::signal::Signal::{SIGTRAP},
 };
-use libc::{SYS_openat, SYS_brk, SYS_close, SYS_access};
+use libc::{SYS_openat, SYS_brk, SYS_close, SYS_access, SYS_execve};
 use libc::{ENOSYS, c_long, c_void};
 use sysnames::Syscalls;
 use exec;
@@ -45,6 +45,7 @@ fn match_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
         libc::SYS_close => {syscalls::close_syscall(child_pid, syscall);},
         libc::SYS_brk => {syscalls::brk_syscall(child_pid, syscall);},
         libc::SYS_access => {syscalls::access_syscall(child_pid, syscall);},
+        libc::SYS_execve => {syscalls::execve_syscall(child_pid, syscall);},
         _ => {
             println!("{}({:#x})", syscall.name, syscall.first_arg);
         },

@@ -20,6 +20,7 @@ impl SyscallBody {
     }
 }
 
+#[derive(Debug)]
 pub struct SyscallBody {
     pub ret: u64,
     pub first_arg: u64,
@@ -89,6 +90,12 @@ pub fn access_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     let addr: ptrace::AddressType = syscall.first_arg as *mut c_void;
     syscall.first_arg_string = read_stack_data(child_pid, addr);
     println!("{}({}) = {:#x}", syscall.name, syscall.first_arg_string, syscall.ret);
+}
+
+pub fn execve_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+//    println!("{}({:#x}, {:#x}) = {:#x}", syscall.name, syscall.first_arg, syscall.second_arg, syscall.ret);
+    dbg!(syscall);
+//   for some reason execve don't work yet
 }
 
 fn read_stack_data(child_pid: &Pid, stack_addr: ptrace::AddressType) -> String {
