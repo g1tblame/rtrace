@@ -93,9 +93,9 @@ pub fn access_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
 }
 
 pub fn execve_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-//    println!("{}({:#x}, {:#x}) = {:#x}", syscall.name, syscall.first_arg, syscall.second_arg, syscall.ret);
-    dbg!(syscall);
 //   for some reason execve don't work yet
+//    dbg!(syscall);
+//    for some reason execve don't work yet
 }
 
 fn read_stack_data(child_pid: &Pid, stack_addr: ptrace::AddressType) -> String {
