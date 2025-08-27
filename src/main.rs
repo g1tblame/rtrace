@@ -63,6 +63,8 @@ fn trace_syscall(child_pid: &Pid) {
         num: regs.orig_rax,
         name: Syscalls::name(regs.orig_rax).unwrap().to_uppercase(),
         args_count_flag: 0,
+        first_arg_string: String::new(),
+        second_arg_string: String::new(),
     };
 
     if syscall.ret == -ENOSYS as u64 {

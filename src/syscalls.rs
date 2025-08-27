@@ -12,6 +12,9 @@ impl SyscallBody {
             1 => {
                 println!("{}({:#x}) = {:#x}", self.name, self.first_arg, self.ret);
             },
+            2 => {
+                println!("{}({}, {}) = {:#x}", self.name, self.first_arg, self.second_arg_string, self.ret);
+            },
             _ => (),
         }
     }
@@ -25,6 +28,8 @@ pub struct SyscallBody {
     pub name: String,
     pub num: u64,
     pub args_count_flag: u64,
+    pub first_arg_string: String,
+    pub second_arg_string: String,
 }
 
 pub fn close_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
@@ -71,9 +76,12 @@ pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
           }
           words_count += word_size;
 
-          
      }
-     println!("OPENAT STRING HERE -- {}", stack_string);
-     //syscall.print();
+     syscall.second_arg_string = stack_string;
+     syscall.args_count_flag = 2;
+    // syscall.print();
+     if(syscall.first_arg == 4294967196) {
+         println!("{}(AT_FDCWD, {}, {:#x}) = {:#x}", syscall.name, syscall.second_arg_string, syscall.ret, syscall.third_arg);
+     }
      
 }
