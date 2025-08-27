@@ -75,13 +75,51 @@ pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
               }
           }
           words_count += word_size;
-
      }
      syscall.second_arg_string = stack_string;
      syscall.args_count_flag = 2;
     // syscall.print();
      if(syscall.first_arg == 4294967196) {
-         println!("{}(AT_FDCWD, {}, {:#x}) = {:#x}", syscall.name, syscall.second_arg_string, syscall.ret, syscall.third_arg);
+         println!("{}(AT_FDCWD, {}, {:#x}) = {:#x}", syscall.name, syscall.second_arg_string, syscall.third_arg, syscall.ret);
      }
      
+}
+
+pub fn access_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    let addr: ptrace::AddressType = syscall.first_arg as *mut c_void;
+    syscall.first_arg_string = read_stack_data(child_pid, addr);
+    println!("{}({}) = {:#x}", syscall.name, syscall.first_arg_string, syscall.ret);
+}
+
+fn read_stack_data(child_pid: &Pid, stack_addr: ptrace::AddressType) -> String {
+     let mut words_count = 0;
+     let word_size = 8;
+     let mut stack_string = String::new();
+
+     'read: loop {
+         let mut raw_bytes: Vec<u8> = vec![];
+         let stack_addr = unsafe {stack_addr.offset(words_count)};
+
+
+         let mut stack_data: c_long = 0;
+         match ptrace::read(*child_pid, stack_addr) {
+             Ok(res) => stack_data = res,
+             Err(_) => break 'read,
+         }
+
+          raw_bytes.write_i64::<LittleEndian>(stack_data).unwrap_or_else(|err| {
+              panic!("Failed to write {} as i64 LittleEndian: {}", stack_data, err);
+          });
+
+          for b in raw_bytes {
+              if b != 0 {
+                  stack_string.push(b as char);
+              } else {
+                  break 'read;
+              }
+          }
+          words_count += word_size;
+     }
+
+     stack_string
 }
