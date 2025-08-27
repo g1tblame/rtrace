@@ -1,6 +1,7 @@
 use nix::unistd::Pid;
 use nix::sys::ptrace;
 use libc::{c_void, c_long};
+use byteorder::{WriteBytesExt, LittleEndian};
 
 impl SyscallBody {
     fn print(&self) {
@@ -42,16 +43,37 @@ pub fn brk_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
 
 pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
      let openat_addr = syscall.second_arg as *mut c_void;
-     let mut stack_data: c_long = 0;
-     let mut hex_bytes: Vec<u8> = vec![];
+     let mut words_count = 0;
+     let word_size = 8;
+     let mut stack_string = String::new();
 
-     let mut string: String = String::new();
-     match ptrace::read(*child_pid, openat_addr) {
-         Ok(data) => {
-             //let first_arg_string = String::from_utf8(data).expect("invalid UTF8");
-             //println!("{:#x}", data);
-             stack_data = data;
-         },
-         Err(_) => (),
+     'read: loop {
+         let mut raw_bytes: Vec<u8> = vec![];
+         let openat_addr = unsafe {openat_addr.offset(words_count)};
+
+
+         let mut stack_data: c_long = 0;
+         match ptrace::read(*child_pid, openat_addr) {
+             Ok(res) => stack_data = res,
+             Err(_) => break 'read,
+         }
+
+          raw_bytes.write_i64::<LittleEndian>(stack_data).unwrap_or_else(|err| {
+              panic!("Failed to write {} as i64 LittleEndian: {}", stack_data, err);
+          });
+
+          for b in raw_bytes {
+              if b != 0 {
+                  stack_string.push(b as char);
+              } else {
+                  break 'read;
+              }
+          }
+          words_count += word_size;
+
+          
      }
+     println!("OPENAT STRING HERE -- {}", stack_string);
+     //syscall.print();
+     
 }
