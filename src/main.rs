@@ -42,13 +42,14 @@ fn check_args_len(exec_args: usize) -> bool {
 fn match_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     match syscall.num as c_long {
         libc::SYS_openat => {syscalls::openat_syscall(child_pid, syscall);},
-        libc::SYS_close => {syscalls::close_syscall(child_pid, syscall);},
-        libc::SYS_brk => {syscalls::brk_syscall(child_pid, syscall);},
-        libc::SYS_access => {syscalls::access_syscall(child_pid, syscall);},
-        libc::SYS_write => {syscalls::write_syscall(child_pid, syscall);},
+        //libc::SYS_close => {syscalls::close_syscall(child_pid, syscall);},
+        //libc::SYS_brk => {syscalls::brk_syscall(child_pid, syscall);},
+        //libc::SYS_access => {syscalls::access_syscall(child_pid, syscall);},
+        //libc::SYS_write => {syscalls::write_syscall(child_pid, syscall);},
 //        libc::SYS_execve => {syscalls::execve_syscall(child_pid, syscall);},
         _ => {
-            println!("{}({:#x})", syscall.name, syscall.first_arg);
+            //println!("{}({:#x})", syscall.name, syscall.first_arg);
+            ();
         },
     }
 
@@ -60,14 +61,15 @@ fn trace_syscall(child_pid: &Pid) {
 
     let mut syscall = SyscallBody {
         ret: regs.rax,
-        first_arg: regs.rdi,
-        second_arg: regs.rsi,
-        third_arg: regs.rdx,
+        rdi: regs.rdi,
+        rsi: regs.rsi,
+        rdx: regs.rdx,
         num: regs.orig_rax,
         name: Syscalls::name(regs.orig_rax).unwrap().to_uppercase(),
         args_count_flag: 0,
         first_arg_string: String::new(),
         second_arg_string: String::new(),
+        third_arg_string: String::new(),
     };
 
     if syscall.ret == -ENOSYS as u64 {

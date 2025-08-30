@@ -22,15 +22,16 @@ impl SyscallBody {
 
 #[derive(Debug)]
 pub struct SyscallBody {
-    pub ret: u64,
-    pub first_arg: u64,
-    pub second_arg: u64,
-    pub third_arg: u64,
+    pub ret: u64, // rax
+    pub rdi: u64, // first arg
+    pub rsi: u64, // second arg
+    pub rdx: u64, // third arg
     pub name: String,
     pub num: u64,
     pub args_count_flag: u64,
-    pub first_arg_string: String,
-    pub second_arg_string: String,
+    pub first_arg: String,
+    pub second_arg: String,
+    pub third_arg: String,
 }
 
 fn read_stack_data(child_pid: &Pid, stack_addr: ptrace::AddressType) -> String {
@@ -84,8 +85,10 @@ pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
      let openat_addr = syscall.second_arg as *mut c_void;
      syscall.second_arg_string = read_stack_data(child_pid, openat_addr);
      if(syscall.first_arg == 4294967196) {
-         println!("{}(AT_FDCWD, {}, {:#x}) = {:#x}", syscall.name, syscall.second_arg_string, syscall.third_arg, syscall.ret);
+         //println!("{}(AT_FDCWD, {}, {:#x}) = {:#x}", syscall.name, syscall.second_arg_string, syscall.third_arg, syscall.ret);
+         println!("{}({}, {}, {:#x}) = {:#x}", syscall.name, syscall.first_arg, syscall.second_arg_string, syscall.third_arg, syscall.ret);
      }
+     println!("{}({}, {}, {:#x}) = {:#x}", syscall.name, syscall.first_arg, syscall.second_arg_string, syscall.third_arg, syscall.ret);
      
 }
 
