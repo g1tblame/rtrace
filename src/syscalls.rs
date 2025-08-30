@@ -33,41 +33,6 @@ pub struct SyscallBody {
     pub second_arg_string: String,
 }
 
-pub fn close_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-    syscall.args_count_flag = 1;
-    syscall.print();
-}
-
-pub fn brk_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-    if syscall.first_arg == 0 {
-        syscall.args_count_flag = 0;
-    } else {
-        syscall.args_count_flag = 1;
-    }
-    syscall.print();
-}
-
-pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-     let openat_addr = syscall.second_arg as *mut c_void;
-     syscall.second_arg_string = read_stack_data(child_pid, openat_addr);
-     if(syscall.first_arg == 4294967196) {
-         println!("{}(AT_FDCWD, {}, {:#x}) = {:#x}", syscall.name, syscall.second_arg_string, syscall.third_arg, syscall.ret);
-     }
-     
-}
-
-pub fn access_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-    let addr: ptrace::AddressType = syscall.first_arg as *mut c_void;
-    syscall.first_arg_string = read_stack_data(child_pid, addr);
-    println!("{}({}) = {:#x}", syscall.name, syscall.first_arg_string, syscall.ret);
-}
-
-pub fn execve_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-//   for some reason execve don't work yet
-//    dbg!(syscall);
-//    for some reason execve don't work yet
-}
-
 fn read_stack_data(child_pid: &Pid, stack_addr: ptrace::AddressType) -> String {
      let mut words_count = 0;
      let word_size = 8;
@@ -100,3 +65,46 @@ fn read_stack_data(child_pid: &Pid, stack_addr: ptrace::AddressType) -> String {
 
      stack_string
 }
+
+pub fn close_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    syscall.args_count_flag = 1;
+    syscall.print();
+}
+
+pub fn brk_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    if syscall.first_arg == 0 {
+        syscall.args_count_flag = 0;
+    } else {
+        syscall.args_count_flag = 1;
+    }
+    syscall.print();
+}
+
+pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+     let openat_addr = syscall.second_arg as *mut c_void;
+     syscall.second_arg_string = read_stack_data(child_pid, openat_addr);
+     if(syscall.first_arg == 4294967196) {
+         println!("{}(AT_FDCWD, {}, {:#x}) = {:#x}", syscall.name, syscall.second_arg_string, syscall.third_arg, syscall.ret);
+     }
+     
+}
+
+pub fn access_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    let addr: ptrace::AddressType = syscall.first_arg as *mut c_void;
+    syscall.first_arg_string = read_stack_data(child_pid, addr);
+    println!("{}({}) = {:#x}", syscall.name, syscall.first_arg_string, syscall.ret);
+}
+
+pub fn write_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+     let write_addr = syscall.second_arg as *mut c_void;
+     syscall.second_arg_string = read_stack_data(child_pid, write_addr);
+     println!("{}({}, [{}]) = {}", syscall.name, syscall.first_arg, syscall.second_arg_string, syscall.ret);
+}
+
+pub fn execve_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+//   for some reason execve don't work yet
+//    dbg!(syscall);
+//    for some reason execve don't work yet
+}
+
+
