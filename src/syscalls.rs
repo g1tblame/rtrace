@@ -3,22 +3,25 @@ use nix::sys::ptrace;
 use libc::{c_void, c_long};
 use byteorder::{WriteBytesExt, LittleEndian};
 
-//impl SyscallBody {
-//    fn print(&self) {
-//        match self.args_count_flag {
-//            0 => {
-//                println!("{}(NULL) = {:#x}", self.name, self.ret);
-//            },
-//            1 => {
-//                println!("{}({:#x}) = {:#x}", self.name, self.first_arg, self.ret);
-//            },
-//            2 => {
-//                println!("{}({}, {}) = {:#x}", self.name, self.first_arg, self.second_arg_string, self.ret);
-//            },
-//            _ => (),
-//        }
-//    }
-//}
+impl SyscallBody {
+    fn print(&self) {
+        match self.args_count_flag {
+            0 => {
+                println!("{}(NULL) = {:#x}", self.name, self.ret);
+            },
+            1 => {
+                println!("{}({:#x}) = {:#x}", self.name, self.rdi, self.ret);
+            },
+            2 => {
+                println!("{}({}, {}) = {:#x}", self.name, self.first_arg, self.second_arg, self.ret);
+            },
+            3 => {
+                println!("{}({}, {}, {}) = {:#x}", self.name, self.first_arg, self.second_arg, self.third_arg, self.ret);
+            },
+            _ => (),
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct SyscallBody {
@@ -85,6 +88,7 @@ pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
      let openat_addr = syscall.rsi as *mut c_void;
      syscall.second_arg = read_stack_data(child_pid, openat_addr);
      syscall.first_arg.push_str("AT_FDCWD");
+     syscall.args_count_flag = 3;
 
      match syscall.rdx {
          0 => syscall.third_arg.push_str("O_RDONLY"),
@@ -102,7 +106,8 @@ pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
          _ => syscall.third_arg.push_str("unknown option yet"),
      }
 
-     println!("{}({}, {}, {} rdx({})) = {}", syscall.name, syscall.first_arg, syscall.second_arg, syscall.third_arg, syscall.rdx, syscall.ret);
+     //println!("{}({}, {}, {} rdx({})) = {}", syscall.name, syscall.first_arg, syscall.second_arg, syscall.third_arg, syscall.rdx, syscall.ret);
+     syscall.print();
      
 }
 
