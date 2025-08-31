@@ -7,16 +7,16 @@ impl SyscallBody {
     fn print(&self) {
         match self.args_count_flag {
             0 => {
-                println!("{}(NULL) = {:#x}", self.name, self.ret);
+                println!("{}(NULL) = {:#x}", self.name, self.rax);
             },
             1 => {
-                println!("{}({:#x}) = {:#x}", self.name, self.rdi, self.ret);
+                println!("{}({:#x}) = {:#x}", self.name, self.rdi, self.rax);
             },
             2 => {
-                println!("{}({}, {}) = {:#x}", self.name, self.first_arg, self.second_arg, self.ret);
+                println!("{}({}, {}) = {:#x}", self.name, self.first_arg, self.second_arg, self.rax);
             },
             3 => {
-                println!("{}({}, {}, {}) = {:#x}", self.name, self.first_arg, self.second_arg, self.third_arg, self.ret);
+                println!("{}({}, {}, {}) = {:#x}", self.name, self.first_arg, self.second_arg, self.third_arg, self.rax);
             },
             _ => (),
         }
@@ -25,16 +25,17 @@ impl SyscallBody {
 
 #[derive(Debug)]
 pub struct SyscallBody {
-    pub ret: u64,
+    pub rax: u64,
     pub rdi: u64, // first arg
     pub rsi: u64, // second arg
     pub rdx: u64, // third arg
     pub name: String,
     pub num: u64,
     pub args_count_flag: u64,
-    pub first_arg: String,
-    pub second_arg: String,
-    pub third_arg: String,
+    pub first_arg: String, // preprocessed rdi
+    pub second_arg: String, // preprocessed rsi
+    pub third_arg: String, // preprocessed rdx
+    pub ret: String, // preprocessed rax
 }
 
 fn read_stack_data(child_pid: &Pid, stack_addr: ptrace::AddressType) -> String {
@@ -70,19 +71,19 @@ fn read_stack_data(child_pid: &Pid, stack_addr: ptrace::AddressType) -> String {
      stack_string
 }
 
-//pub fn close_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-//    syscall.args_count_flag = 1;
-//    syscall.print();
-//}
-//
-//pub fn brk_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-//    if syscall.first_arg == 0 {
-//        syscall.args_count_flag = 0;
-//    } else {
-//        syscall.args_count_flag = 1;
-//    }
-//    syscall.print();
-//}
+pub fn close_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    syscall.args_count_flag = 1;
+    syscall.print();
+}
+
+pub fn brk_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    if syscall.rdi == 0 {
+        syscall.args_count_flag = 0;
+    } else {
+        syscall.args_count_flag = 1;
+    }
+    syscall.print();
+}
 
 pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
      let openat_addr = syscall.rsi as *mut c_void;
@@ -106,22 +107,23 @@ pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
          _ => syscall.third_arg.push_str("unknown option yet"),
      }
 
-     //println!("{}({}, {}, {} rdx({})) = {}", syscall.name, syscall.first_arg, syscall.second_arg, syscall.third_arg, syscall.rdx, syscall.ret);
      syscall.print();
      
 }
 
-//pub fn access_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-//    let addr: ptrace::AddressType = syscall.first_arg as *mut c_void;
-//    syscall.first_arg_string = read_stack_data(child_pid, addr);
-//    println!("{}({}) = {:#x}", syscall.name, syscall.first_arg_string, syscall.ret);
-//}
-//
-//pub fn write_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-//     let write_addr = syscall.second_arg as *mut c_void;
-//     syscall.second_arg_string = read_stack_data(child_pid, write_addr);
-//     println!("{}({}, [{}]) = {}", syscall.name, syscall.first_arg, syscall.second_arg_string, syscall.ret);
-//}
+pub fn access_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    let addr: ptrace::AddressType = syscall.rdi as *mut c_void;
+    syscall.first_arg = read_stack_data(child_pid, addr);
+    syscall.args_count_flag = 2;
+    syscall.print();
+}
+
+pub fn write_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+     let write_addr = syscall.rsi as *mut c_void;
+     syscall.second_arg = read_stack_data(child_pid, write_addr);
+     syscall.args_count_flag = 3;
+     syscall.print();
+}
 
 pub fn execve_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
 //   for some reason execve don't work yet
