@@ -89,6 +89,7 @@ pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
      let openat_addr = syscall.rsi as *mut c_void;
      syscall.second_arg = read_stack_data(child_pid, openat_addr);
      syscall.first_arg.push_str("AT_FDCWD");
+     syscall.ret = format!("0x{:x}", syscall.rax);
      syscall.args_count_flag = 3;
 
      match syscall.rdx {
@@ -107,13 +108,16 @@ pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
          _ => syscall.third_arg.push_str("unknown option yet"),
      }
 
-     syscall.print();
+    syscall.print();
      
 }
 
 pub fn access_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     let addr: ptrace::AddressType = syscall.rdi as *mut c_void;
     syscall.first_arg = read_stack_data(child_pid, addr);
+    if(syscall.rsi == 4) {
+        syscall.second_arg.push_str("R_OK");
+    }
     syscall.args_count_flag = 2;
     syscall.print();
 }
@@ -126,12 +130,43 @@ pub fn write_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
 }
 
 pub fn mmap_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    syscall.args_count_flag = 3;
+    if syscall.rdi == 0 {
+        syscall.first_arg.push_str("NULL");
+    }
+    else {
+        syscall.first_arg = format!("0x{:x}", syscall.rdi);
+    }
+    syscall.second_arg = syscall.rsi.to_string();
+
+    match syscall.rdx {
+        1 => syscall.third_arg.push_str("PROT_READ"),
+        2 => syscall.third_arg.push_str("PROT_WRITE"),
+        3 => syscall.third_arg.push_str("PROT_READ|PROT_WRITE"),
+        4 => syscall.third_arg.push_str("PROT_EXEC"),
+        5 => syscall.third_arg.push_str("PROT_READ|PROT_EXEC"),
+        8 => syscall.third_arg.push_str("PROT_SEM"),
+        _ => (),
+    }
+
+    syscall.print();
 }
 
 pub fn munmap_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    syscall.args_count_flag = 2;
     syscall.first_arg = format!("0x{:x}", syscall.rdi);
     syscall.second_arg = syscall.rsi.to_string();
-    syscall.args_count_flag = 2;
+
+    syscall.print();
+}
+
+pub fn read_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+//    let addr = syscall.rsi as *mut c_void;
+//    syscall.second_arg = read_stack_data(child_pid, addr);
+    syscall.args_count_flag = 3;
+    syscall.first_arg = format!("0x{:x}", syscall.rdi);
+    syscall.second_arg = format!("0x{:x}", syscall.rsi);
+    syscall.third_arg = syscall.rdx.to_string();
     syscall.print();
 }
 
