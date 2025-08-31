@@ -22,7 +22,7 @@ use byteorder::{WriteBytesExt, LittleEndian};
 
 #[derive(Debug)]
 pub struct SyscallBody {
-    pub ret: u64, // rax
+    pub ret: u64,
     pub rdi: u64, // first arg
     pub rsi: u64, // second arg
     pub rdx: u64, // third arg
@@ -84,19 +84,25 @@ fn read_stack_data(child_pid: &Pid, stack_addr: ptrace::AddressType) -> String {
 pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
      let openat_addr = syscall.rsi as *mut c_void;
      syscall.second_arg = read_stack_data(child_pid, openat_addr);
-     if(syscall.rdi == 4294967196) {
-         syscall.first_arg.push_str("AT_FDCWD");
-     }
+     syscall.first_arg.push_str("AT_FDCWD");
 
      match syscall.rdx {
          0 => syscall.third_arg.push_str("O_RDONLY"),
          1 => syscall.third_arg.push_str("O_WRONLY"),
          2 => syscall.third_arg.push_str("O_RDWR"),
+         64 => syscall.third_arg.push_str("O_RDONLY|O_CREAT"),
+         65 => syscall.third_arg.push_str("O_WRONLY|O_CREAT"),
+         66 => syscall.third_arg.push_str("O_RDWR|O_CREAT"),
+         1024 => syscall.third_arg.push_str("O_RDONLY|O_APPEND"),
+         1025 => syscall.third_arg.push_str("O_WRONLY|O_APPEND"),
+         1026 => syscall.third_arg.push_str("O_RDWR|O_APPEND"),
          524288 => syscall.third_arg.push_str("O_RDONLY|O_CLOEXEC"),
-         _ => (),
+         524289 => syscall.third_arg.push_str("O_WRONLY|O_CLOEXEC"),
+         524290 => syscall.third_arg.push_str("O_RDWR|O_CLOEXEC"),
+         _ => syscall.third_arg.push_str("unknown option yet"),
      }
-     
-     println!("{}({}, {}, {}) = {:#x}", syscall.name, syscall.first_arg, syscall.second_arg, syscall.third_arg, syscall.ret);
+
+     println!("{}({}, {}, {} rdx({})) = {}", syscall.name, syscall.first_arg, syscall.second_arg, syscall.third_arg, syscall.rdx, syscall.ret);
      
 }
 
