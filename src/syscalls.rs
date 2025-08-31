@@ -167,6 +167,7 @@ pub fn read_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     syscall.first_arg = format!("0x{:x}", syscall.rdi);
     syscall.second_arg = format!("0x{:x}", syscall.rsi);
     syscall.third_arg = syscall.rdx.to_string();
+
     syscall.print();
 }
 
