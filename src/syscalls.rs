@@ -90,6 +90,9 @@ pub fn openat_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
 
      match syscall.rdx {
          0 => syscall.third_arg.push_str("O_RDONLY"),
+         1 => syscall.third_arg.push_str("O_WRONLY"),
+         2 => syscall.third_arg.push_str("O_RDWR"),
+         524288 => syscall.third_arg.push_str("O_RDONLY|O_CLOEXEC"),
          _ => (),
      }
      
