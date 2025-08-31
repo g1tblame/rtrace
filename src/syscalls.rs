@@ -125,6 +125,16 @@ pub fn write_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
      syscall.print();
 }
 
+pub fn mmap_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+}
+
+pub fn munmap_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    syscall.first_arg = format!("0x{:x}", syscall.rdi);
+    syscall.second_arg = syscall.rsi.to_string();
+    syscall.args_count_flag = 2;
+    syscall.print();
+}
+
 pub fn execve_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
 //   for some reason execve don't work yet
 //    dbg!(syscall);
