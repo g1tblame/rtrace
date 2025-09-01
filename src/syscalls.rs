@@ -10,10 +10,10 @@ impl SyscallBody {
                 println!("{}({}) = {}", self.name, self.first_arg, self.ret);
             },
             2 => {
-                println!("{}({}, {}) = {:#x}", self.name, self.first_arg, self.second_arg, self.rax);
+                println!("{}({}, {}) = {}", self.name, self.first_arg, self.second_arg, self.rax);
             },
             3 => {
-                println!("{}({}, {}, {}) = {:#x}", self.name, self.first_arg, self.second_arg, self.third_arg, self.rax);
+                println!("{}({}, {}, {}) = {}", self.name, self.first_arg, self.second_arg, self.third_arg, self.ret);
             },
             _ => (),
         }
@@ -125,9 +125,12 @@ pub fn access_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
 }
 
 pub fn write_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+     syscall.args_count_flag = 3;
      let write_addr = syscall.rsi as *mut c_void;
      syscall.second_arg = read_stack_data(child_pid, write_addr);
-     syscall.args_count_flag = 3;
+     syscall.first_arg = format!("{}", syscall.rdi);
+     syscall.third_arg = format!("{}", syscall.rdx);
+     syscall.ret = format!("{}", syscall.rax);
      syscall.print();
 }
 
@@ -151,6 +154,7 @@ pub fn mmap_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
         _ => (),
     }
 
+    syscall.ret = format!("0x{:x}", syscall.rax);
     syscall.print();
 }
 
@@ -169,6 +173,24 @@ pub fn read_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     syscall.first_arg = format!("0x{:x}", syscall.rdi);
     syscall.second_arg = format!("0x{:x}", syscall.rsi);
     syscall.third_arg = syscall.rdx.to_string();
+    syscall.ret = format!("{}", syscall.rax);
+
+    syscall.print();
+}
+
+pub fn prctl_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    syscall.args_count_flag = 1;
+    match syscall.rdi {
+        23 => syscall.first_arg.push_str("PR_CAPBSET_READ"),
+        _ => (),
+    }
+
+    if syscall.rax == 18446744073709551594 {
+        syscall.ret.push_str("-1 EINVAL (Invalid argument)");
+    }
+    else {
+        syscall.ret = format!("{}", syscall.rax);
+    }
 
     syscall.print();
 }
