@@ -6,11 +6,8 @@ use byteorder::{WriteBytesExt, LittleEndian};
 impl SyscallBody {
     fn print(&self) {
         match self.args_count_flag {
-            0 => {
-                println!("{}(NULL) = {:#x}", self.name, self.rax);
-            },
             1 => {
-                println!("{}({:#x}) = {:#x}", self.name, self.rdi, self.rax);
+                println!("{}({}) = {}", self.name, self.first_arg, self.ret);
             },
             2 => {
                 println!("{}({}, {}) = {:#x}", self.name, self.first_arg, self.second_arg, self.rax);
@@ -73,15 +70,20 @@ fn read_stack_data(child_pid: &Pid, stack_addr: ptrace::AddressType) -> String {
 
 pub fn close_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     syscall.args_count_flag = 1;
+    syscall.first_arg = format!("{}", syscall.rdi);
+    syscall.ret = format!("{}", syscall.rax);
     syscall.print();
 }
 
 pub fn brk_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    syscall.args_count_flag = 1;
     if syscall.rdi == 0 {
-        syscall.args_count_flag = 0;
-    } else {
-        syscall.args_count_flag = 1;
+        syscall.first_arg.push_str("NULL");
     }
+    else {
+        syscall.first_arg = format!("0x{:x}", syscall.rdi);
+    }
+    syscall.ret = format!("0x{:x}", syscall.rax);
     syscall.print();
 }
 
@@ -167,6 +169,23 @@ pub fn read_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     syscall.first_arg = format!("0x{:x}", syscall.rdi);
     syscall.second_arg = format!("0x{:x}", syscall.rsi);
     syscall.third_arg = syscall.rdx.to_string();
+
+    syscall.print();
+}
+
+pub fn prctl_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    syscall.args_count_flag = 1;
+    match syscall.rdi {
+        23 => syscall.first_arg.push_str("PR_CAPBSET_READ"),
+        _ => (),
+    }
+
+    if syscall.rax == 18446744073709551594 {
+        syscall.ret.push_str("-1 EINVAL (Invalid argument)");
+    }
+    else {
+        syscall.ret = format!("{}", syscall.rax);
+    }
 
     syscall.print();
 }
