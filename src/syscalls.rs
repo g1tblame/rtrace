@@ -4,7 +4,7 @@ use libc::{c_void, c_long};
 use byteorder::{WriteBytesExt, LittleEndian};
 
 impl SyscallBody {
-    fn print(&self) {
+    pub fn print(&self) {
         match self.args_count_flag {
             1 => {
                 println!("{}({}) = {}", self.name, self.first_arg, self.ret);

@@ -3,6 +3,8 @@ use nix::unistd::Pid;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+#[derive(Debug, EnumIter, PartialEq, Clone)]
+#[repr(u64)]
 pub enum PrctlOp {
     PR_SET_PDEATHSIG = 1,
     PR_GET_PDEATHSIG = 2,
@@ -40,4 +42,12 @@ pub enum PrctlOp {
 }
 
 pub fn prctl_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
+    for op in PrctlOp::iter() {
+        if syscall.rdi == (op.clone() as u64) {
+            syscall.first_arg = format!("{:?}", op.clone());
+        }
+    }
+    syscall.args_count_flag = 1;
+    syscall.ret = format!("0x{:x}", syscall.rax);
+    syscall.print();
 }
