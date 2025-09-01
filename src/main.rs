@@ -1,6 +1,8 @@
 #![allow(dead_code, unused)]
+#![allow(non_camel_case_types)]
 
 mod syscalls;
+mod prctl;
 
 use nix::{
     unistd::{fork, ForkResult, Pid},
@@ -50,7 +52,7 @@ fn match_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
         libc::SYS_munmap => {syscalls::munmap_syscall(child_pid, syscall);},
         libc::SYS_execve => {syscalls::execve_syscall(child_pid, syscall);},
         libc::SYS_read => {syscalls::read_syscall(child_pid, syscall);},
-        libc::SYS_prctl => {syscalls::prctl_syscall(child_pid, syscall);},
+        libc::SYS_prctl => {prctl::prctl_syscall(child_pid, syscall);},
         _ => {
             println!("{}({:#x})", syscall.name, syscall.rdi);
             ();

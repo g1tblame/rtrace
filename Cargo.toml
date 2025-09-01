@@ -8,4 +8,5 @@ byteorder = "1.5.0"
 exec = "0.3.1"
 libc = "0.2.174"
 nix = { version = "0.30.1", features = ["process", "ptrace"] }
+strum = "0.27.2"
 sysnames = "0.1.3"
