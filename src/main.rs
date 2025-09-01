@@ -99,7 +99,7 @@ fn tracer_init(child_pid: &Pid) {
         ptrace::syscall(*child_pid, None);
         match waitpid(*child_pid, None) {
             Ok(WaitStatus::Exited(_, _)) => {
-                println!("child process was finished!");
+                println!("===== finished successfully! =====");
                 break;
             },
             Ok(WaitStatus::Stopped(pid_t, sig_t)) => {

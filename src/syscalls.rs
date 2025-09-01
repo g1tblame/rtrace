@@ -181,23 +181,12 @@ pub fn read_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
 pub fn prctl_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     syscall.args_count_flag = 1;
     match syscall.rdi {
-        23 => syscall.first_arg.push_str("PR_CAPBSET_READ"),
-        _ => (),
-    }
-
-    if syscall.rax == 18446744073709551594 {
-        syscall.ret.push_str("-1 EINVAL (Invalid argument)");
-    }
-    else {
-        syscall.ret = format!("{}", syscall.rax);
-    }
-
-    syscall.print();
-}
-
-pub fn prctl_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
-    syscall.args_count_flag = 1;
-    match syscall.rdi {
+        1 => syscall.first_arg.push_str("PR_SET_PDEATHSIG"),
+        2 => syscall.first_arg.push_str("PR_GET_PDEATHSIG"),
+        3 => syscall.first_arg.push_str("PR_GET_DUMPABLE"),
+        4 => syscall.first_arg.push_str("PR_SET_DUMPABLE"),
+        5 => syscall.first_arg.push_str("PR_GET_UNALIGN"),
+        6 => syscall.first_arg.push_str("PR_SET_UNALIGN"),
         23 => syscall.first_arg.push_str("PR_CAPBSET_READ"),
         _ => (),
     }
