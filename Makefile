@@ -1,6 +1,6 @@
 .PHONY: all build install clean
 
-BINARY_NAME = rtracer
+BINARY_NAME = rtrace
 TARGET_PATH = target/debug/$(BINARY_NAME)
 INSTALL_PATH = /usr/bin/$(BINARY_NAME)
 

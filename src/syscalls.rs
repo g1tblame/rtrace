@@ -10,7 +10,7 @@ impl SyscallBody {
                 println!("{}({}) = {}", self.name, self.first_arg, self.ret);
             },
             2 => {
-                println!("{}({}, {}) = {}", self.name, self.first_arg, self.second_arg, self.rax);
+                println!("{}({}, {}) = {}", self.name, self.first_arg, self.second_arg, self.ret);
             },
             3 => {
                 println!("{}({}, {}, {}) = {}", self.name, self.first_arg, self.second_arg, self.third_arg, self.ret);
@@ -121,6 +121,7 @@ pub fn access_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
         syscall.second_arg.push_str("R_OK");
     }
     syscall.args_count_flag = 2;
+    syscall.ret = format!("0x{:x}", syscall.rax);
     syscall.print();
 }
 
@@ -162,6 +163,7 @@ pub fn munmap_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
     syscall.args_count_flag = 2;
     syscall.first_arg = format!("0x{:x}", syscall.rdi);
     syscall.second_arg = syscall.rsi.to_string();
+    syscall.ret = format!("0x{:x}", syscall.rax);
 
     syscall.print();
 }
