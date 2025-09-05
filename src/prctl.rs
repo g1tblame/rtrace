@@ -47,7 +47,8 @@ pub fn prctl_syscall(child_pid: &Pid, syscall: &mut SyscallBody) {
             syscall.first_arg = format!("{:?}", op.clone());
         }
     }
-    syscall.args_count_flag = 1;
+    syscall.args_count_flag = 2;
+    syscall.second_arg = format!("0x{:x}", syscall.rsi);
     syscall.ret = format!("0x{:x}", syscall.rax);
     syscall.print();
 }
