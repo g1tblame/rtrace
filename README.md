@@ -6,7 +6,7 @@ achtung: project contains a lot of shitty code, don't use it for the real purpos
 
 usage example for ls:
 
-'''
+```
 ~/rtrace [ rtrace ls                                                                                                                                                                               main * ] 9:29 PM
 BRK(NULL) = 0x55bfbaa92000
 ACCESS(/etc/ld.so.preload, R_OK) = 0xfffffffffffffffe
@@ -73,4 +73,4 @@ CLOSE(1) = 0
 CLOSE(2) = 0
 ===== finished successfully! =====
 
-'''
+```
